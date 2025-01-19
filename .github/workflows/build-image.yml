@@ -1,10 +1,50 @@
-name: Build a docker image
+name: CI
 
-on: workflow_dispatch
+on:
+    push:
+        branches: ["main"]
+    pull_request:
+        branches: ["main"]
+    workflow_dispatch:
 
 jobs:
-    info:
+    Docker:
         runs-on: ubuntu-latest
         steps:
-            - name: Output GitHub context
-              run: echo "${{ toJSON(github) }}"
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                node-version: 'latest'
+
+            - name: Setup git config
+              run: |
+                git config user.name "GitHub Actions Bot"
+                git config user.email "<>"
+            
+            - name: Dependencies
+              run: npm ci
+
+            - name: Build
+              run: npm run build
+
+            - name: Save version
+              id: version
+              run: echo ::set-output name=tag::${echo $(node -p -e "require('./package.json').version"))
+            
+            - name: Increase version
+              run: npm version patch
+
+            - name: Push new version
+              run: git push
+
+            - name: Login to DockerHub Registry
+              run: echo ${{secrets.DOCKERHUB_PASSWORD}} | docker login -u ${{secrets.DOCKERHUB_USERNAME}} --password-stdin
+
+            - name: Build Docker image
+              run: docker build . --file Dockerfile
+
+            - name: Build Docker image
+              run: docker build . --file Dockerfile --tag ionhashicorp/test01:${{steps.version.outputs.tag}}
+
+            - name: Push to Docker Hub
+              run: docker push
