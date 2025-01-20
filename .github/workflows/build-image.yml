@@ -38,13 +38,13 @@ jobs:
               run: git push
 
             - name: Login to DockerHub Registry
-              run: echo ${{secrets.DOCKERHUB_PASSWORD}} | docker login -u ${{secrets.DOCKERHUB_USERNAME}} --password-stdin
+              run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
 
             - name: Build Docker image
               run: docker build . --file Dockerfile
 
             - name: Build Docker image
-              run: docker build . --file Dockerfile --tag ionhashicorp/test01:${{steps.version.outputs.tag}}
+              run: docker build . --file Dockerfile --tag ionhashicorp/test01:${{ steps.version.outputs.tag }}
 
             - name: Push to Docker Hub
               run: docker push
